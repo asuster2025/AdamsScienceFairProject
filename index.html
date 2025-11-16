@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <title>Mint & Focus — Concentration & Problem Solving Test (Loop Fix)</title>
+  <title>Mint & Focus — Concentration & Problem Solving Test (NumberSeq fixes)</title>
   <style>
     :root {
       --bg: #0f172a;        /* slate-900 */
@@ -242,6 +242,16 @@
       ['pointerdown','touchstart','click'].forEach(ev => continueBtn.addEventListener(ev, wrapped, {passive:false}));
     }
 
+    // Helper to bind a single, deduped tap to an element (pointerdown only)
+    function bindPointerTap(el, handler){
+      if(!el) return;
+      el.addEventListener('pointerdown', (e)=>{
+        e.preventDefault();
+        if (performance.now() < suppressUntil) return;
+        handler(e);
+      }, {passive:false});
+    }
+
     const COLORS = [
       {name:'BLUE',   class:'c-blue',   key:'f'},
       {name:'GREEN',  class:'c-green',  key:'j'},
@@ -381,10 +391,14 @@
     const NumberSeq = {
       name: 'NumberSeq',
       practice: true, size: 9, nextExpected: 1, startTime: 0,
-      errors: 0, roundsMain: 3, _roundIdx: 0, inputEnableAt: 0,
+      errors: 0, roundErrors: 0, roundsMain: 3, _roundIdx: 0, inputEnableAt: 0,
 
       start(practice=true){
-        this.practice = practice; this.errors=0; this._roundIdx = 0; this._announce();
+        this.practice = practice;
+        this.errors = 0;
+        this.roundErrors = 0;
+        this._roundIdx = 0;
+        this._announce();
       },
 
       _announce(){
@@ -404,18 +418,14 @@
         grid.className = 'grid9';
         shuffle(numbers);
         this.nextExpected = 1;
+        this.roundErrors = 0;  // reset per round
         this.startTime = now();
 
         numbers.forEach(n => {
           const cell = document.createElement('div');
           cell.className = 'cell';
           cell.textContent = n;
-          ['pointerdown','touchstart','click'].forEach(ev => {
-            cell.addEventListener(ev, (e)=>{
-              e.preventDefault();
-              if(now() >= this.inputEnableAt) this._tap(n, cell);
-            }, {passive:false});
-          });
+          bindPointerTap(cell, () => this._tap(n, cell));
           grid.appendChild(cell);
         });
 
@@ -425,13 +435,17 @@
 
       _tap(n, el){
         if(session.paused) return;
+        if(now() < this.inputEnableAt) return;
+        if(el.classList.contains('correct')) return; // ignore duplicate taps on already-correct cell
+
         if(n === this.nextExpected){
           el.classList.add('correct');
           this.nextExpected++;
           if(this.nextExpected>this.size){
             const t = Math.round(now() - this.startTime);
             if(!this.practice){
-              session.data.push({ task:'NumberSeq', phase:'main', round: this._roundIdx+1, time_ms:t, errors:this.errors, input_method:'tap', timestamp: Date.now(), ...session.meta });
+              // log per-round errors
+              session.data.push({ task:'NumberSeq', phase:'main', round: this._roundIdx+1, time_ms:t, errors:this.roundErrors, input_method:'tap', timestamp: Date.now(), ...session.meta });
             }
             this._roundIdx++;
             const totalRounds = this.practice? 1 : this.roundsMain;
@@ -443,7 +457,10 @@
               return;
             }
             if(this._roundIdx<totalRounds){
-              setTimeout(()=>{ this.inputEnableAt = now() + 300; this._setupRound(); }, 350);
+              setTimeout(()=>{
+                this.inputEnableAt = now() + 300;
+                this._setupRound();
+              }, 350);
               return;
             }
             taskArea.innerHTML = `<div class="big">Section complete!</div>`;
@@ -453,14 +470,15 @@
         } else {
           el.classList.add('wrong');
           this.errors++;
-          setTimeout(()=>el.classList.remove('wrong'), 180);
+          this.roundErrors++;
+          setTimeout(()=>el.classList.remove('wrong'), 160);
         }
       }
     };
 
     const TASKS = {Stroop, NumberSeq};
 
-    // Next Section helper (FIXED to start Stroop test directly)
+    // Next Section helper (Stroop test starts directly)
     function showNextSectionFor(next){
       const isStartTest1 = (!next.practice && next.task==='Stroop');
       const rows = next.task==='Stroop'
@@ -481,7 +499,7 @@
         buttonText,
         onClick: () => {
           if (isStartTest1) {
-            TASKS[next.task].start(next.practice);   // <-- start Stroop test directly (fixes loop)
+            TASKS[next.task].start(next.practice);
           } else {
             startNextSection();
           }
