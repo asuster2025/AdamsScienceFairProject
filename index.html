@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>Mint & Focus — Concentration & Problem Solving Test (Loop Fix)</title>
+  <style>
+    :root {
+      --bg: #0f172a;        /* slate-900 */
+      --card: #111827;      /* gray-900 */
+      --text: #e5e7eb;      /* gray-200 */
+      --muted: #94a3b8;     /* slate-400 */
+      --accent: #22c55e;    /* green-500 */
+      --accent-2: #60a5fa;  /* blue-400 */
+      --danger: #ef4444;    /* red-500 */
+      --warn: #f59e0b;      /* amber-500 */
+      --ok: #10b981;        /* emerald-500 */
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(1200px 800px at 70% 10%, #1f2937 0%, var(--bg) 55%);
+      color: var(--text);
+      display: grid; place-items: center;
+      overscroll-behavior: contain;
+      -webkit-font-smoothing: antialiased;
+      -webkit-user-select: none; user-select: none;
+    }
+    .container { width: min(1000px, 94vw); margin: 24px auto; padding-bottom: 12px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    h1 { margin: 0 0 8px; font-weight: 800; letter-spacing: 0.3px; display:flex; gap:12px; align-items:center; }
+    h2 { margin: 6px 0 6px; font-weight: 700; font-size: 1.1rem; }
+    p { color: var(--muted); line-height: 1.5; font-size: 0.98rem; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .col { flex: 1 1 220px; }
+    label { display:block; font-size: 0.95rem; margin: 8px 0 6px; color: #cbd5e1; }
+    input, select, button, textarea {
+      width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04); color: var(--text); outline: none;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent-2); box-shadow: 0 0 0 3px rgba(96,165,250,0.25); }
+    button { cursor: pointer; font-weight: 800; letter-spacing: 0.2px; font-size: 1rem; }
+    .btn { background: linear-gradient(180deg, #2563eb, #1d4ed8); border: none; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-alt { background: linear-gradient(180deg, #16a34a, #15803d); border:none; }
+    .btn-warn { background: linear-gradient(180deg, #f59e0b, #d97706); border:none; }
+    .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.14); }
+    .center { text-align:center; }
+    .spacer { height: 14px; }
+    .hidden { display: none !important; }
+    .pill { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.14); font-size: 12px; color:#cbd5e1 }
+    .grid { display: grid; gap: 10px; }
+
+    /* Task area */
+    #taskArea { min-height: 380px; display: grid; place-items: center; padding: 16px; border-radius: 16px; border: 1px dashed rgba(255,255,255,0.15); outline: none; }
+    .big { font-size: clamp(22px, 3.8vw, 36px); font-weight: 800; letter-spacing: 0.4px; }
+    .xxl { font-size: clamp(40px, 7vw, 82px); font-weight: 900; line-height: 1.1; }
+    .faint { color: #9ca3af; font-size: 0.9rem; }
+
+    /* Keyboard helper chips */
+    .keys { display:flex; justify-content:center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .key { border: 1px solid rgba(255,255,255,0.2); padding: 6px 8px; border-radius: 10px; min-width: 60px; text-align:center; background: rgba(255,255,255,0.06); font-weight: 900; font-size: 0.85rem; }
+
+    /* Number grid for sequence task */
+    .grid9 { display: grid; grid-template-columns: repeat(3, minmax(90px, 22vw)); grid-auto-rows: minmax(90px, 22vw); gap: 12px; }
+    @media (min-width: 1000px) {
+      .grid9 { grid-template-columns: repeat(3, 170px); grid-auto-rows: 170px; }
+    }
+    .cell { display:grid; place-items:center; border-radius: 16px; border:1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); font-weight:900; font-size: clamp(26px, 4.5vw, 38px); cursor: pointer; user-select: none; touch-action: manipulation; }
+    .cell.correct { outline: 3px solid rgba(34,197,94,0.7); }
+    .cell.wrong { outline: 3px solid rgba(239,68,68,0.75); }
+
+    /* Progress */
+    progress { width: 100%; height: 12px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.08); }
+    progress::-webkit-progress-bar { background: rgba(255,255,255,0.08); }
+    progress::-webkit-progress-value { background: linear-gradient(90deg, #60a5fa, #22c55e); }
+
+    /* Data tables */
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { padding: 8px; border-bottom: 1px dashed rgba(255,255,255,0.12); text-align: left; vertical-align: top; }
+    th { color: #cbd5e1; font-weight: 700; }
+    tbody tr:hover { background: rgba(255,255,255,0.04); }
+
+    /* Interlude table: small + one-screen */
+    .interlude-wrap { width: 100%; max-width: 780px; margin: 0 auto; }
+    .interlude-table { table-layout: fixed; width: 100%; font-size: .92rem; line-height: 1.35; }
+    .interlude-table th { width: 36%; }
+    .interlude-table td { width: 64%; }
+
+    /* Color classes for stimulus ink */
+    .c-red{color:#e11d48} .c-green{color:#10b981} .c-blue{color:#3b82f6} .c-yellow{color:#eab308}
+
+    .footer { color:#94a3b8; font-size: 12px; text-align:center; margin-top: 12px; }
+
+    /* Peppermint image */
+    .peppermint { width: 48px; height: 48px; display:inline-block; }
+
+    /* Error banner */
+    #errBanner { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); background:#7f1d1d; color:#fecaca; padding:8px 12px; border-radius:10px; font-size: 12px; display:none; z-index: 9999; }
+  </style>
+</head>
+<body>
+  <div id="errBanner"></div>
+
+  <div class="container">
+    <div class="card" id="stage-intro">
+      <h1>
+        <!-- Peppermint candy icon (inline SVG) -->
+        <svg class="peppermint" viewBox="0 0 100 100" aria-hidden="true">
+          <defs><clipPath id="c"><circle cx="50" cy="50" r="44"/></clipPath></defs>
+          <circle cx="50" cy="50" r="46" fill="#ffffff22" stroke="#ffffff55"/>
+          <g clip-path="url(#c)">
+            <rect x="0" y="0" width="100" height="100" fill="#fffb"/>
+            <g transform="translate(50,50)">
+              <path d="M0,0 L50,0 A50,50 0 0 1 15,47 Z" fill="#ef4444"/>
+              <path d="M0,0 L15,47 A50,50 0 0 1 -40,30 Z" fill="#ffffff"/>
+              <path d="M0,0 L-40,30 A50,50 0 0 1 -30,-40 Z" fill="#ef4444"/>
+              <path d="M0,0 L-30,-40 A50,50 0 0 1 35,-35 Z" fill="#ffffff"/>
+              <path d="M0,0 L35,-35 A50,50 0 0 1 50,0 Z" fill="#ef4444"/>
+            </g>
+          </g>
+        </svg>
+        Mint & Focus
+      </h1>
+      <p>A web‑based battery to measure <strong>attention</strong> and <strong>problem‑solving</strong>. Use it to compare performance <em>with mint</em> vs. <em>without mint</em>. (iPad‑friendly; Stroop uses keyboard F/J/K/L.)</p>
+
+      <div class="row">
+        <div class="col">
+          <label for="participantId">Participant ID</label>
+          <input id="participantId" placeholder="e.g., P007" />
+        </div>
+        <div class="col">
+          <label for="condition">Condition</label>
+          <select id="condition">
+            <option value="Mint">Mint (no practice)</option>
+            <option value="NoMint" selected>No Mint (with practice)</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="age">Age (optional)</label>
+          <input id="age" type="number" min="5" max="100" placeholder="e.g., 13" />
+        </div>
+      </div>
+      <label for="notes">Notes (optional)</label>
+      <textarea id="notes" rows="2" placeholder="brand/flavor of mint, minutes since mint, distractions, etc."></textarea>
+
+      <div class="spacer"></div>
+      <div class="row">
+        <div class="col">
+          <button class="btn" id="startBtn">Start</button>
+        </div>
+        <div class="col">
+          <button class="btn-ghost" id="fullscreenBtn">Fullscreen</button>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="pill" id="flowPill">Flow: Start → <strong>Begin Practice</strong> → Practice (Stroop & Number) → <strong>Test 1 Instructions</strong> → <strong>Next Section (Stroop)</strong> → Stroop → <strong>Next Section</strong> → Number</div>
+      <p class="faint" style="margin-top:6px"><strong>Tip:</strong> Open in Safari (not Files preview) so JavaScript runs.</p>
+    </div>
+
+    <div class="card hidden" id="stage-task" tabindex="-1">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div class="pill" id="statusPill">Task</div>
+        <div style="min-width: 160px;">
+          <progress id="prog" max="100" value="0"></progress>
+        </div>
+      </div>
+      <div class="spacer"></div>
+
+      <div id="taskHeader"></div>
+      <div id="taskArea" class="center"></div>
+
+      <div class="spacer"></div>
+      <div class="row">
+        <div class="col">
+          <button class="btn-warn" id="pauseBtn">Pause</button>
+        </div>
+        <div class="col">
+          <button class="btn-alt hidden" id="continueBtn">Continue</button>
+        </div>
+        <div class="col">
+          <button class="btn-ghost" id="quitBtn">Quit</button>
+        </div>
+      </div>
+      <div class="footer" id="tipFooter"></div>
+    </div>
+
+    <div class="card hidden" id="stage-results">
+      <h2>Session Summary</h2>
+      <p id="summary"></p>
+      <div id="tables"></div>
+      <div class="spacer"></div>
+      <div class="row">
+        <div class="col"><button class="btn" id="downloadCsv">Download CSV</button></div>
+        <div class="col"><button class="btn-ghost" id="restart">Run Another Participant</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  'use strict';
+
+  window.addEventListener('error', (e) => {
+    const b = document.getElementById('errBanner');
+    if (!b) return;
+    b.textContent = 'Script error: ' + (e && e.message ? e.message : 'Unknown error');
+    b.style.display = 'block';
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const $ = sel => document.querySelector(sel);
+    const choice = arr => arr[Math.floor(Math.random() * arr.length)];
+    const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+    const now = () => performance.now();
+
+    // Tap suppression
+    let suppressUntil = 0;
+    function suppressTaps(ms = 400){ suppressUntil = performance.now() + ms; }
+    // Continue button manager
+    let continueBtn = $('#continueBtn');
+    function setContinue(text, onClick){
+      const old = continueBtn;
+      const clone = old.cloneNode(true);
+      clone.id = old.id;
+      old.parentNode.replaceChild(clone, old);
+      continueBtn = clone;
+      continueBtn.textContent = text || 'Continue';
+      continueBtn.classList.remove('hidden');
+      const wrapped = (e) => {
+        e.preventDefault();
+        if (performance.now() < suppressUntil) return;
+        continueBtn.classList.add('hidden');
+        suppressTaps(450);
+        onClick && onClick();
+      };
+      ['pointerdown','touchstart','click'].forEach(ev => continueBtn.addEventListener(ev, wrapped, {passive:false}));
+    }
+
+    const COLORS = [
+      {name:'BLUE',   class:'c-blue',   key:'f'},
+      {name:'GREEN',  class:'c-green',  key:'j'},
+      {name:'RED',    class:'c-red',    key:'k'},
+      {name:'YELLOW', class:'c-yellow', key:'l'},
+    ];
+
+    function mean(arr){ return arr.length? arr.reduce((a,b)=>a+b,0)/arr.length : 0 }
+    function median(arr){ if(!arr.length) return 0; const s=[...arr].sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2? s[m] : (s[m-1]+s[m])/2 }
+    function dl(filename, text){
+      const blob = new Blob([text], {type: 'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Elements
+    const intro = $('#stage-intro');
+    const flowPill = $('#flowPill');
+    const taskStage = $('#stage-task');
+    const results = $('#stage-results');
+    const taskArea = $('#taskArea');
+    const taskHeader = $('#taskHeader');
+    const statusPill = $('#statusPill');
+    const prog = $('#prog');
+    const tipFooter = $('#tipFooter');
+    const fullscreenBtn = $('#fullscreenBtn');
+
+    function show(el){ el.classList.remove('hidden'); }
+    function hide(el){ el.classList.add('hidden'); }
+    function setFooterTip(text){ tipFooter.textContent = text || ''; }
+
+    // Session state
+    const session = {
+      meta: { id:"", condition:"NoMint", age:null, notes:"", startedAt: null },
+      data: [],
+      sections: [],
+      paused: false,
+    };
+
+    function interlude({title, rows = [], buttonText='Continue', onClick}){
+      statusPill.textContent = 'Section Break';
+      prog.value = 0;
+      taskHeader.innerHTML = `<h2>${title}</h2>`;
+      const tbody = rows.map(r=>`<tr><th>${r[0]||''}</th><td>${r[1]||''}</td></tr>`).join('');
+      const html = `<div class="interlude-wrap"><table class="interlude-table"><tbody>${tbody}</tbody></table></div>`;
+      taskArea.innerHTML = html;
+      setContinue(buttonText, onClick);
+      setFooterTip('');
+    }
+
+    function focusTaskPanel(){
+      try { taskStage.focus({ preventScroll: true }); } catch(_) {}
+    }
+
+    // Stroop
+    const Stroop = {
+      name: 'Stroop',
+      mainTrials: 36,
+      practiceTrials: 8,
+      idx: 0, practice: true, trialStart: 0, listener: null,
+
+      start(practice=true){
+        this.idx = 0; this.practice = practice; this._announce();
+        document.activeElement && document.activeElement.blur && document.activeElement.blur();
+        focusTaskPanel();
+      },
+
+      _announce(){
+        statusPill.textContent = `Task ${this.practice? 'Practice' : '1 • Stroop'}`;
+        prog.value = 0;
+        taskHeader.innerHTML = `<h2>Color–Word Task (${this.practice? 'Practice' : 'Test'})</h2>
+          <div class="keys" aria-hidden="true">
+            <div class="key">F = BLUE</div>
+            <div class="key">J = GREEN</div>
+            <div class="key">K = RED</div>
+            <div class="key">L = YELLOW</div>
+          </div>`;
+
+        const inst = `<p class="faint">Press the key for the <strong>INK color</strong>, not the word. Keep fingers on <strong>F/J/K/L</strong>. Go fast and accurate.</p>`;
+        taskArea.innerHTML = inst + `<div class="big">Get ready…</div>`;
+        setFooterTip(this.practice ? 'Practice: 8 trials.' : 'Main test: 36 trials.');
+        setTimeout(()=>this.next(), 700);
+      },
+
+      next(){
+        const total = this.practice? this.practiceTrials : this.mainTrials;
+        if(this.idx >= total){
+          window.removeEventListener('keydown', this.listener);
+          taskArea.innerHTML = `<div class="big">${this.practice? 'Practice complete!' : 'Section complete!'}</div>`;
+          setFooterTip('');
+          setContinue('Continue', () => onSectionComplete());
+          return;
+        }
+
+        const word = choice(COLORS);
+        let ink = choice(COLORS);
+        const r = Math.random();
+        const type = r<0.5? 'incongruent' : (r<0.75? 'congruent' : 'neutral');
+        if(type==='congruent') ink = word; else if(type==='incongruent'){ while(ink.name===word.name){ ink = choice(COLORS); } }
+        const showWord = type==='neutral' ? 'XXXX' : word.name;
+
+        taskArea.innerHTML = `<div class="xxl ${ink.class}">${showWord}</div>`;
+        this.trialStart = now();
+
+        const trialNum = this.idx + 1;
+        const handler = (e)=>{
+          if(session.paused) return;
+          const key = (e.key || '').toLowerCase();
+          const map = { 'f':'BLUE','j':'GREEN','k':'RED','l':'YELLOW' };
+          if(!(key in map)) return;
+          const respColor = map[key];
+          const rt = Math.round(now() - this.trialStart);
+          const correct = respColor === ink.name;
+
+          if(!this.practice){
+            session.data.push({
+              task: 'Stroop', phase: 'main', trial: trialNum,
+              word: showWord, ink: ink.name, type,
+              key, response: respColor, correct,
+              input_method:'keyboard',
+              rt_ms: rt, timestamp: Date.now(), ...session.meta
+            });
+          }
+
+          this.idx++; prog.value = Math.round(100 * (this.idx / total));
+          window.removeEventListener('keydown', this.listener);
+          this.next();
+        };
+        this.listener = handler;
+        window.addEventListener('keydown', handler, { once: true });
+      }
+    };
+
+    // NumberSeq
+    const NumberSeq = {
+      name: 'NumberSeq',
+      practice: true, size: 9, nextExpected: 1, startTime: 0,
+      errors: 0, roundsMain: 3, _roundIdx: 0, inputEnableAt: 0,
+
+      start(practice=true){
+        this.practice = practice; this.errors=0; this._roundIdx = 0; this._announce();
+      },
+
+      _announce(){
+        statusPill.textContent = `Task ${this.practice? 'Practice' : '2 • Number Sequence'}`;
+        prog.value = 0;
+        taskHeader.innerHTML = `<h2>Number Ordering (${this.practice? 'Practice' : 'Test'})</h2>`;
+        taskArea.innerHTML = `<p class="faint">Tap numbers 1→9 in order as quickly as you can. Wrong taps flash red; keep going.</p>`;
+        suppressTaps(450);
+        this.inputEnableAt = now() + 450;
+        this._setupRound();
+        setFooterTip(this.practice ? 'Practice: 1 short round.' : 'Main test: 3 rounds.');
+      },
+
+      _setupRound(){
+        const numbers = Array.from({length:this.size}, (_,i)=>i+1);
+        const grid = document.createElement('div');
+        grid.className = 'grid9';
+        shuffle(numbers);
+        this.nextExpected = 1;
+        this.startTime = now();
+
+        numbers.forEach(n => {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.textContent = n;
+          ['pointerdown','touchstart','click'].forEach(ev => {
+            cell.addEventListener(ev, (e)=>{
+              e.preventDefault();
+              if(now() >= this.inputEnableAt) this._tap(n, cell);
+            }, {passive:false});
+          });
+          grid.appendChild(cell);
+        });
+
+        taskArea.innerHTML = '';
+        taskArea.appendChild(grid);
+      },
+
+      _tap(n, el){
+        if(session.paused) return;
+        if(n === this.nextExpected){
+          el.classList.add('correct');
+          this.nextExpected++;
+          if(this.nextExpected>this.size){
+            const t = Math.round(now() - this.startTime);
+            if(!this.practice){
+              session.data.push({ task:'NumberSeq', phase:'main', round: this._roundIdx+1, time_ms:t, errors:this.errors, input_method:'tap', timestamp: Date.now(), ...session.meta });
+            }
+            this._roundIdx++;
+            const totalRounds = this.practice? 1 : this.roundsMain;
+            prog.value = Math.round(100 * (this._roundIdx / totalRounds));
+            if(this.practice){
+              taskArea.innerHTML = `<div class="big">Practice complete!</div>`;
+              setFooterTip('');
+              setContinue('Continue', () => onSectionComplete());
+              return;
+            }
+            if(this._roundIdx<totalRounds){
+              setTimeout(()=>{ this.inputEnableAt = now() + 300; this._setupRound(); }, 350);
+              return;
+            }
+            taskArea.innerHTML = `<div class="big">Section complete!</div>`;
+            setFooterTip('');
+            setContinue('Continue', () => onSectionComplete());
+          }
+        } else {
+          el.classList.add('wrong');
+          this.errors++;
+          setTimeout(()=>el.classList.remove('wrong'), 180);
+        }
+      }
+    };
+
+    const TASKS = {Stroop, NumberSeq};
+
+    // Next Section helper (FIXED to start Stroop test directly)
+    function showNextSectionFor(next){
+      const isStartTest1 = (!next.practice && next.task==='Stroop');
+      const rows = next.task==='Stroop'
+        ? [
+            ['Next', '<em>Color–Word (Stroop)</em>'],
+            ['Keys', '<strong>F=BLUE</strong>, <strong>J=GREEN</strong>, <strong>K=RED</strong>, <strong>L=YELLOW</strong>'],
+            ['Reminder', 'Press the key for the <em>INK color</em>, not the word.']
+          ]
+        : [
+            ['Next', '<em>Number Ordering</em>'],
+            ['Action', 'Tap numbers <strong>1→9</strong> in order, as quickly as possible.'],
+            ['Rounds', next.practice ? 'Practice: 1 round' : 'Test: 3 rounds']
+          ];
+      const buttonText = next.practice ? 'Continue' : (next.task==='Stroop' ? 'Start Test 1' : 'Continue');
+      interlude({
+        title: 'Next Section',
+        rows,
+        buttonText,
+        onClick: () => {
+          if (isStartTest1) {
+            TASKS[next.task].start(next.practice);   // <-- start Stroop test directly (fixes loop)
+          } else {
+            startNextSection();
+          }
+        }
+      });
+    }
+
+    // Flow control
+    function startSession(){
+      suppressTaps(450);
+      const id = ($('#participantId').value || '').trim() || `P-${Math.random().toString(36).slice(2,7)}`;
+      const condition = $('#condition').value;
+      const ageVal = $('#age').value ? Number($('#age').value) : null;
+      session.meta = { id, condition, age: ageVal, notes: ($('#notes').value || '').trim(), startedAt: new Date().toISOString() };
+
+      hide(intro); show(taskStage); hide(results);
+
+      if (flowPill) {
+        flowPill.innerHTML = condition === 'Mint'
+          ? 'Flow: Start → <strong>Test 1 Instructions</strong> → <strong>Next Section (Stroop)</strong> → Stroop → <strong>Next Section</strong> → Number'
+          : 'Flow: Start → <strong>Begin Practice</strong> → Practice (Stroop & Number) → <strong>Test 1 Instructions</strong> → <strong>Next Section (Stroop)</strong> → Stroop → <strong>Next Section</strong> → Number';
+      }
+
+      if (condition === 'Mint') {
+        session.sections = [
+          {task:'Stroop', practice:false},
+          {task:'NumberSeq', practice:false},
+        ];
+        const next = session.sections[0];
+        interlude({
+          title: 'Test 1 Instructions',
+          rows: [
+            ['Order', '<em>Stroop</em> (36 trials) → <em>Number Ordering</em> (3 rounds)'],
+            ['Controls', 'Stroop: keyboard F/J/K/L for INK color. Number: tap 1→9 in order.'],
+            ['Focus', 'Keep eyes on the INK color. If keys don’t respond, click/tap the test area once.'],
+            ['Recording', 'We record accuracy, reaction times, and errors.']
+          ],
+          buttonText:'Continue',
+          onClick: () => { showNextSectionFor(next); }
+        });
+        return;
+      }
+
+      session.sections = [
+        {task:'Stroop', practice:true},
+        {task:'NumberSeq', practice:true},
+        {task:'Stroop', practice:false},
+        {task:'NumberSeq', practice:false},
+      ];
+
+      interlude({
+        title: 'Begin Practice',
+        rows: [
+          ['Stroop (practice)', 'Use the keyboard: <strong>F=BLUE</strong>, <strong>J=GREEN</strong>, <strong>K=RED</strong>, <strong>L=YELLOW</strong>. Press the key for the <em>INK color</em>, not the word. 8 trials.'],
+          ['Number (practice)', 'Tap numbers <strong>1→9</strong> in order. One short round. Wrong taps flash red.'],
+          ['Goal', 'Be <em>fast</em> and <em>accurate</em>.']
+        ],
+        buttonText:'Start Practice',
+        onClick: () => { startNextSection(); }
+      });
+    }
+
+    function startNextSection(){
+      const next = session.sections[0];
+      if(!next){ endSession(); return; }
+
+      if(!next.practice && session.sections.length === 2 && session.meta.condition !== 'Mint'){
+        interlude({
+          title: 'Test 1 Instructions',
+          rows: [
+            ['Order', '<em>Stroop</em> (36 trials) → <em>Number Ordering</em> (3 rounds)'],
+            ['Controls', 'Stroop: keyboard F/J/K/L for INK color. Number: tap 1→9 in order.'],
+            ['Focus', 'Keep eyes on the INK color. If keys don’t respond, click/tap the test area once.'],
+            ['Recording', 'We record accuracy, reaction times, and errors.']
+          ],
+          buttonText:'Continue',
+          onClick: () => { showNextSectionFor(next); }
+        });
+        return;
+      }
+
+      TASKS[next.task].start(next.practice);
+    }
+
+    function onSectionComplete(){
+      session.sections.shift();
+      const next = session.sections[0];
+      if(!next){ endSession(); return; }
+
+      if(!next.practice && session.sections.length === 2 && session.meta.condition !== 'Mint'){
+        interlude({
+          title: 'Test 1 Instructions',
+          rows: [
+            ['Order', '<em>Stroop</em> (36 trials) → <em>Number Ordering</em> (3 rounds)'],
+            ['Controls', 'Stroop: keyboard F/J/K/L for INK color. Number: tap 1→9 in order.'],
+            ['Focus', 'Keep eyes on the INK color. If keys don’t respond, click/tap the test area once.'],
+            ['Recording', 'We record accuracy, reaction times, and errors.']
+          ],
+          buttonText:'Continue',
+          onClick: () => { showNextSectionFor(next); }
+        });
+        return;
+      }
+
+      showNextSectionFor(next);
+    }
+
+    function endSession(){
+      hide(taskStage); show(results);
+      const d = session.data;
+      const stroop = d.filter(x=>x.task==='Stroop');
+      const ns = d.filter(x=>x.task==='NumberSeq');
+
+      const stroopRTs = stroop.filter(x=>x.correct).map(x=>x.rt_ms);
+      const stroopAcc = stroop.length? (100 * stroop.filter(x=>x.correct).length / stroop.length) : 0;
+      const nsTimes = ns.map(x=>x.time_ms);
+      const nsErrors = ns.reduce((a,b)=>a+(b.errors||0), 0);
+
+      document.getElementById('summary').innerHTML =
+        `Participant <strong>${session.meta.id}</strong> • Condition <strong>${session.meta.condition}</strong><br>
+         Stroop: <strong>${stroop.length}</strong> trials • Accuracy <strong>${stroopAcc.toFixed(1)}%</strong> • Mean RT <strong>${Math.round(mean(stroopRTs))} ms</strong> (median ${Math.round(median(stroopRTs))} ms)<br>
+         Number Sequence: 3 rounds • Mean time <strong>${Math.round(mean(nsTimes))} ms</strong> • Total errors <strong>${nsErrors}</strong>`;
+
+      const tablesDiv = document.getElementById('tables');
+      const mkTable = (rows, cols) => {
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        thead.innerHTML = '<tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '</tr>';
+        table.appendChild(thead);
+        const tbody = document.createElement('tbody');
+        rows.forEach(r=>{
+          const tr = document.createElement('tr');
+          tr.innerHTML = cols.map(c=>`<td>${r[c] ?? ''}</td>`).join('');
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        return table;
+      };
+
+      tablesDiv.innerHTML = '';
+      if(stroop.length){
+        const cols = ['trial','type','word','ink','response','correct','rt_ms','key','input_method'];
+        tablesDiv.appendChild(document.createElement('h3')).textContent = 'Stroop (trial-level)';
+        tablesDiv.appendChild(mkTable(stroop, cols));
+      }
+      if(ns.length){
+        const cols = ['round','time_ms','errors','input_method'];
+        tablesDiv.appendChild(document.createElement('h3')).textContent = 'Number Sequence (round-level)';
+        tablesDiv.appendChild(mkTable(ns, cols));
+      }
+    }
+
+    // Controls
+    ['startBtn','quitBtn','downloadCsv','restart','pauseBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const map = {
+        startBtn: startSession,
+        quitBtn: ()=>location.reload(),
+        downloadCsv: exportCsv,
+        restart: ()=>location.reload(),
+        pauseBtn: ()=>{
+          session.paused = !session.paused;
+          el.textContent = session.paused? 'Resume' : 'Pause';
+          statusPill.textContent = session.paused? 'Paused' : statusPill.textContent.replace('Paused','');
+        }
+      };
+      const handler = map[id];
+      ['pointerdown','touchstart','click'].forEach(ev => el.addEventListener(ev, (e)=>{ e.preventDefault(); handler(); }, {passive:false}));
+    });
+
+    function exportCsv(){
+      const cols = ['id','condition','age','notes','startedAt','task','phase','trial','type','word','ink','key','response','correct','rt_ms','round','time_ms','errors','input_method','timestamp'];
+      const rows = session.data.map(r=>{
+        const obj = {}; cols.forEach(k=>obj[k]= (r[k]!==undefined? r[k] : (session.meta[k]!==undefined? session.meta[k] : '')));
+        return obj;
+      });
+      const head = cols.join(',');
+      const body = rows.map(r=> cols.map(k=> String(r[k]).replace(/\"/g,'\"\"')).map(v=> /[,\n]/.test(v) ? '\"'+v+'\"' : v).join(',')).join('\n');
+      const csv = head+'\n'+body;
+      const filename = `${session.meta.id}_${session.meta.condition}_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
+      dl(filename, csv);
+    }
+
+    // Fullscreen
+    const fullscreenBtnEl = document.getElementById('fullscreenBtn');
+    if (fullscreenBtnEl) fullscreenBtnEl.addEventListener('click', async ()=>{
+      try {
+        if(!document.fullscreenElement && document.documentElement.requestFullscreen){
+          await document.documentElement.requestFullscreen();
+        } else if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        }
+      } catch(_) {}
+    });
+  });
+  </script>
+</body>
+</html>
